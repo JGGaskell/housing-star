@@ -3,7 +3,7 @@
 Notable changes to `housing-star`. Versions follow [semantic versioning](https://semver.org/); before
 1.0, a minor version may include breaking changes.
 
-## 0.1.0 - Unreleased
+## 0.1.0 - 2026-11-20
 
 First public release. Supports Python 3.11 to 3.15.
 
