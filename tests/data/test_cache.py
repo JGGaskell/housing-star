@@ -35,7 +35,21 @@ def test_default_cache_dir_prefers_environment(monkeypatch, tmp_path):
 
 def test_default_cache_dir_falls_back_to_user_cache(monkeypatch):
     monkeypatch.delenv(CACHE_ENV_VAR, raising=False)
-    assert default_cache_dir().name == "housing_star"
+    # housing_star on macOS and Linux, housing_star\Cache on Windows; named once on every platform.
+    assert default_cache_dir().parts.count("housing_star") == 1
+
+
+def test_default_cache_dir_on_windows_names_the_package_once(monkeypatch):
+    """Windows' rules, simulated on any platform: the package folder must not be repeated."""
+    import platformdirs.windows
+
+    def windows_cache_dir(appname, appauthor=None):
+        return platformdirs.windows.Windows(appname=appname, appauthor=appauthor).user_cache_dir
+
+    monkeypatch.delenv(CACHE_ENV_VAR, raising=False)
+    monkeypatch.setattr(platformdirs.windows, "get_win_folder", lambda _name: "C:/Local")
+    monkeypatch.setattr(platformdirs, "user_cache_dir", windows_cache_dir)
+    assert default_cache_dir() == Path("C:/Local/housing_star/Cache")
 
 
 def test_normalise_prefix():

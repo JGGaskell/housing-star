@@ -96,9 +96,16 @@ class _Job:
 
 
 def default_cache_dir() -> Path:
-    """``$HOUSING_STAR_CACHE`` if set, otherwise the platform user-cache directory."""
+    """``$HOUSING_STAR_CACHE`` if set, otherwise the platform user-cache directory.
+
+    That is ``~/Library/Caches/housing_star`` on macOS, ``~/.cache/housing_star`` on Linux and
+    ``%LOCALAPPDATA%\\housing_star\\Cache`` on Windows.
+    """
     override = os.environ.get(CACHE_ENV_VAR)
-    return Path(override) if override else Path(platformdirs.user_cache_dir("housing_star"))
+    if override:
+        return Path(override)
+    # Without appauthor=False, Windows repeats the name: housing_star\housing_star\Cache.
+    return Path(platformdirs.user_cache_dir("housing_star", appauthor=False))
 
 
 def normalise_prefix(prefix: str) -> str:
