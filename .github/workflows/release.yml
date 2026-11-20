@@ -4,9 +4,14 @@ name: Release
 # wheel once, uploads them to TestPyPI, and then, after a maintainer approves the `pypi`
 # environment, to PyPI. Uploads use PyPI trusted publishing, so no API token is stored anywhere.
 # RELEASING.md describes the one-off setup on PyPI, TestPyPI and GitHub.
+#
+# Running it by hand (Actions → Release → Run workflow) is a trial run: it uploads to TestPyPI
+# only, as a development version such as 0.1.0.dev7 numbered by the run, so a trial never uses up
+# the real version number there, and nothing goes to PyPI.
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -25,6 +30,7 @@ jobs:
         with:
           python-version: "3.13"
       - name: Check that the tag matches the version in pyproject.toml
+        if: github.event_name == 'release'
         env:
           TAG: ${{ github.event.release.tag_name }}
         run: |
@@ -33,6 +39,27 @@ jobs:
             echo "::error::Release tag $TAG does not match pyproject.toml version $VERSION (expected v$VERSION)."
             exit 1
           fi
+      - name: Make a trial run a development version
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          python - <<'PY'
+          import os, pathlib, re
+
+          path = pathlib.Path("pyproject.toml")
+          text, count = re.subn(
+              r'(?m)^version = "([^"]+)"$',
+              lambda m: f'version = "{m[1]}.dev{os.environ["RUN_NUMBER"]}"',
+              path.read_text(),
+          )
+          assert count == 1, "expected exactly one version line in pyproject.toml"
+          path.write_text(text)
+          version = re.search(r'(?m)^version = "([^"]+)"$', text)[1]
+          print(f"Trial version: {version}")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write(f"Trial upload to TestPyPI as **housing-star {version}**\n")
+          PY
       - run: pip install build twine
       - run: python -m build
       - run: twine check --strict dist/*
@@ -64,6 +91,7 @@ jobs:
   pypi:
     name: Publish to PyPI
     needs: testpypi
+    if: github.event_name == 'release'  # never on a trial run
     runs-on: ubuntu-latest
     environment:
       name: pypi  # give this environment a required reviewer, so this job waits for approval

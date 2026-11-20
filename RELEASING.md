@@ -52,6 +52,24 @@ TestPyPI is a separate site with separate accounts. Do each step on both
    A *pending* publisher reserves nothing until the first upload, which creates the project and
    makes the publisher permanent. Upload soon after adding it, or someone else could take the name.
 
+## Trial run on TestPyPI
+
+To check the whole pipeline without releasing anything, go to Actions → **Release** → *Run
+workflow* on `main`. This runs CI, builds the distributions as a development version numbered by
+the run (for example `0.1.0.dev7`), and uploads them to TestPyPI only. It creates no GitHub Release
+or tag, never uploads to PyPI, and does not use up the real version number on TestPyPI. The run's
+summary page shows the version it uploaded.
+
+Install a trial build in a clean environment. Development versions are pre-releases, so name the
+version or pass `--pre`:
+
+```bash
+pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ \
+    "housing-star==0.1.0.dev7"
+```
+
+The first trial upload is also what creates the `housing-star` project on TestPyPI.
+
 ## Each release
 
 1. **Set the version.** Make `version` in `pyproject.toml` the new version, and give its
