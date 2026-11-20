@@ -1,0 +1,128 @@
+[build-system]
+requires = ["hatchling>=1.27"]  # 1.27 reads the SPDX licence fields
+build-backend = "hatchling.build"
+
+[project]
+name = "housing-star"
+version = "0.1.0"
+description = "Spatial-temporal autoregression (STAR) for UK house price time series"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "JGGaskell" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
+dependencies = [
+    "numpy>=1.24",
+    "polars>=1.20",
+    "pandera[polars]>=0.36",
+    "requests>=2.31",
+    "pyyaml>=6.0",
+    "platformdirs>=3.0",
+    "joblib>=1.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/JGGaskell/housing-star"
+Repository = "https://github.com/JGGaskell/housing-star"
+Issues = "https://github.com/JGGaskell/housing-star/issues"
+Changelog = "https://github.com/JGGaskell/housing-star/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+pandas = ["pandas>=2.0", "pyarrow>=14"]  # only for as_pandas=True exports
+plot = ["matplotlib>=3.7"]  # only for plot_neighbourhood
+notebooks = ["matplotlib>=3.7", "scipy>=1.10", "jupyterlab>=4", "ipykernel"]  # to run notebooks/
+dev = [
+    "pytest>=7",
+    "pytest-cov>=4",
+    "ruff>=0.5",
+    "mypy>=1.8",
+    "types-PyYAML",
+    "types-requests",
+    "nbformat",
+    "nbconvert",
+    "ipykernel",
+    "matplotlib>=3.7",  # notebooks, and plot_neighbourhood
+    "scipy>=1.10",  # notebook 03's sector panel
+    "pandas>=2.0",
+    "pyarrow>=14",
+]
+
+# The source archive lists what it ships, so local files that git ignores only on this machine
+# (scratch work, caches, environments) can never be swept into a release.
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/notebooks",
+    "/scenarios",
+    "/scripts",
+    "/pyproject.toml",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/ATTRIBUTION.md",
+    "/LICENSE",
+]
+exclude = ["__pycache__", "*.pyc", ".ipynb_checkpoints"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/housing_star"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"ATTRIBUTION.md" = "housing_star/ATTRIBUTION.md"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+branch = true
+source = ["housing_star"]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_covered = true
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "TID", "SIM"]
+# Single-letter capitals (W, N, T, A) are standard notation in the STAR literature.
+ignore = ["N802", "N803", "N806", "E501"]  # the formatter wraps code; long messages are fine
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"pandas".msg = "pandas is banned in this project; use polars."
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B011"]
+# These fields are Land Registry column names, which are camelCase.
+"src/housing_star/data/schema.py" = ["N815"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+files = ["src"]
+plugins = []
+
+[[tool.mypy.overrides]]
+module = ["joblib.*"]
+ignore_missing_imports = true

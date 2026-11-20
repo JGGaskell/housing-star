@@ -1,0 +1,39 @@
+# Example scenario for the GL5 neighbourhood.
+#
+#   import housing_star as hs
+#
+#   ds = hs.PriceSeriesDataset.from_postcode(
+#       "GL5", start="2005-01-01", end="2023-01-01", holdout=0, graph=hs.GraphConfig(radius_m=15_000)
+#   )
+#   model = hs.StarModel(p=1).fit(ds)
+#   result = hs.simulate(model, ds, hs.Scenario.from_yaml("scenarios/example.yaml"))
+#   result.target_effect()   # % change in GL5 prices versus baseline, per future year
+#   result.to_frame()        # one row per (node, year)
+
+# The focal postcode; it must be one of the dataset's nodes.
+target: GL5
+
+# Number of future periods to simulate (here: years).
+horizon: 5
+
+perturbations:
+  # clamp: the node is FORCED onto baseline * cumulative multiplier from each listed step on.
+  # +5% in year 1, then a further +15% in year 2 compounds to 1.05 * 1.15 = +20.75% versus
+  # baseline; later years hold that level.
+  - name: nearby_boom
+    select:
+      nth_closest: 1      # rank 1 = nearest neighbour of the target node
+    mode: clamp
+    steps:
+      - { step: 1, change_pct: 5 }
+      - { step: 2, change_pct: 15 }
+
+  # impulse: a one-off shock. In year 1 the node's price is 10% lower than the model would
+  # otherwise give it; afterwards the node evolves freely, so the shock fades (or amplifies)
+  # through the model's dynamics.
+  - name: specific_dip
+    select:
+      postcode: GL10     # exact district (merged nodes such as "GL8+GL11" match by component)
+    mode: impulse
+    steps:
+      - { step: 1, change_pct: -10 }

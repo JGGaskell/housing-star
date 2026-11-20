@@ -1,0 +1,47 @@
+# Python cache
+__pycache__/
+*.py[cod]
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Packaging / build
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Testing / tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Generated / downloaded data (the Land Registry cache can reach hundreds of MB)
+ppd_cache/
+backtest_results/
+oos_results/
+tuning_results/
+*.csv
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE / OS
+.idea/
+.vscode/
+.cursor/
+.DS_Store
+Thumbs.db
+
+# Secrets and logs
+.env
+.env.*
+!.env.example
+*.log
+logs/
